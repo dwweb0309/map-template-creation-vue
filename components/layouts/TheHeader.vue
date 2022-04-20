@@ -18,11 +18,24 @@
               </b-nav-item>
             </b-navbar-nav>
             <template v-else>
+              <b-nav-item to="/dashboard">
+                Dashboard
+              </b-nav-item>
               <b-nav-item-dropdown right>
                 <!-- Using 'button-content' slot -->
                 <template #button-content>
                   <b-icon-person></b-icon-person>
                 </template>
+                <b-dropdown-text>
+                  <div class="d-flex align-items-center">
+                    <b-avatar variant="primary" text="BV"></b-avatar>
+                    <div class="ml-4">
+                      <div class="font-weight-bold">{{ user.username }}</div>
+                      <div>{{ user.email }}</div>
+                    </div>
+                  </div>
+                </b-dropdown-text>
+                <b-dropdown-divider></b-dropdown-divider>
                 <b-dropdown-item href="#">Profile</b-dropdown-item>
                 <b-dropdown-item @click="logout">Sign Out</b-dropdown-item>
               </b-nav-item-dropdown>
@@ -36,7 +49,7 @@
 
 <script>
 import { BIcon, BIconPerson } from 'bootstrap-vue'
-import { mapGetters, mapActions } from 'vuex'
+import { mapState, mapGetters, mapActions } from 'vuex'
 
 export default {
   components: {
@@ -44,6 +57,7 @@ export default {
     BIconPerson
   },
   computed: {
+    ...mapState('auth', ['user']),
     ...mapGetters('auth', ['isLoggedIn'])
   },
   methods: {

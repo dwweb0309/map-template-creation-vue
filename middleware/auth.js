@@ -1,6 +1,6 @@
-export default function ({ store, route, redirect }) {
+export default async function ({ app, store, route, redirect }) {
   const isLoggedIn = !!store.state.auth.user
-  const role = store.state.auth.user && store.state.auth.user.role.name
+  const role = store.state.auth.user && store.state.auth.user.roles[0].name
 
   if (isLoggedIn) {
     if (route.meta[0].requiresGuest) {
