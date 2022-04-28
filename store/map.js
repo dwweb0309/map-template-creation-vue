@@ -39,6 +39,16 @@ export const actions = {
       commit('SET_ERROR', err.response.data)
     }
   },
+  async updateMap ({ commit }, payload) {
+    try {
+      const response = await this.$axios.put(`/maps/${payload.id}`, payload)
+
+      return response
+    } catch (err) {
+      console.log(err)
+      commit('SET_ERROR', err.response.data)
+    }
+  },
   async getMap ({ commit }, id) {
     try {
       const response = await this.$axios.get(`/maps/${id}`)

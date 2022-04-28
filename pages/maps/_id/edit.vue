@@ -1,13 +1,18 @@
 <template>
   <div>
-    <b-container>
+    <b-container fluid>
       <h5>Edit map</h5>
       <b-card no-body>
         <b-tabs content-class="mt-3" pills small card>
           <b-tab title="Settings" active>
             <map-settings-form :is-edit="true" />
           </b-tab>
-          <b-tab title="Locations">
+          <b-tab title="Locations" class="pt-2">
+            <div class="text-right">
+              <b-button size="sm" :to="`/maps/${$route.params.id}/locations/create`" class="ml-auto mb-2">
+                <b-icon-plus></b-icon-plus>Add location
+              </b-button>
+            </div>
             <map-locations-table />
           </b-tab>
         </b-tabs>
@@ -17,33 +22,26 @@
 </template>
 
 <script>
-import { mapActions } from 'vuex'
+import { mapState, mapActions } from 'vuex'
+import { BIcon, BIconPlus } from 'bootstrap-vue'
 export default {
   middleware: 'auth',
   meta: {
     requiresAuth: true
   },
-  data() {
-    return {
-      map: null,
-      loading: false
-    }
+  components: {
+    BIcon,
+    BIconPlus
   },
-  computed: {
+  data: () => ({
 
+  }),
+  computued: {
+    ...mapState('map', ['map']),
+    ...mapState('location', ['locations'])
   },
-  async mouted() {
-    try {
-      this.loading = true
+  mounted() {
 
-      const response = await this.getMap(this.$route.params.id)
-
-      this.map = response.data.map
-    } catch (err) {
-      console.log(err)
-    } finally {
-      this.loading = false
-    }
   },
   methods: {
     ...mapActions('map', ['getMap'])

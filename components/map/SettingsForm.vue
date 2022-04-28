@@ -8,7 +8,7 @@
       >
         <b-form-group label="Name:" label-for="name">
           <b-form-input
-            input-id="name"
+            id="name"
             v-model="settings.name"
             placeholder="Map name"
             @input="CLEAR_ERROR"
@@ -27,7 +27,7 @@
       >
         <b-form-group label="Description:" label-for="description">
           <b-form-textarea
-            input-id="description"
+            id="description"
             v-model="settings.description"
             placeholder="Description"
             @input="CLEAR_ERROR"
@@ -108,11 +108,6 @@ export default {
     isEdit: {
       type: Boolean,
       default: false
-    },
-    defaultSettings: {
-      type: Object,
-      default: () => null,
-      required: false
     }
   },
   data: () => ({
@@ -129,12 +124,25 @@ export default {
   computed: {
     ...mapState('map', ['templates', 'error'])
   },
-  mounted () {
+  async mounted () {
     this.CLEAR_ERROR()
     this.getMapTemplates()
+    if (this.isEdit) {
+      try {
+        const response = await this.getMap(this.$route.params.id)
+
+        this.settings.name = response.data.map.title
+        this.settings.description = response.data.map.description
+        this.settings.templateId = response.data.map.template_id
+        this.settings.seo = JSON.parse(response.data.map.seo_keywords)
+        this.settings.basemapSelector = response.data.map.map_selector
+      } catch (err) {
+        console.log(err)
+      }
+    }
   },
   methods: {
-    ...mapActions('map', ['createMap', 'getMapTemplates']),
+    ...mapActions('map', ['createMap', 'updateMap', 'getMapTemplates', 'getMap']),
     ...mapMutations('map', ['CLEAR_ERROR']),
     getValidationState({ dirty, validated, valid = null }) {
       return dirty || validated ? valid : null
@@ -144,9 +152,16 @@ export default {
 
       try {
         this.loading = true
-        const response = await this.createMap(this.settings)
+        let response
 
-        this.$emit('created', response.data.map)
+        if (this.isEdit) {
+          response = await this.updateMap({ ...this.settings, id: this.$route.params.id })
+          this.$emit('updated', response.data.map)
+        } else {
+          response = await this.createMap(this.settings)
+          this.$emit('created', response.data.map)
+        }
+
       } catch (err) {
         console.log(err)
       } finally {

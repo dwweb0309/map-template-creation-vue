@@ -1,7 +1,7 @@
 <template>
   <div>
     <b-navbar toggleable="lg" type="dark" variant="primary">
-      <b-container>
+      <b-container fluid>
         <b-navbar-brand to="/">
           Map Template
         </b-navbar-brand>

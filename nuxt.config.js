@@ -66,5 +66,9 @@ export default {
     transpile: [
       'vee-validate'
     ]
+  },
+
+  publicRuntimeConfig: {
+    mapboxToken: process.env.VUE_APP_MAPBOX_TOKEN
   }
 }

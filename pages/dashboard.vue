@@ -15,11 +15,11 @@
           :fields="fields"
           class="mt-2"
         >
-          <template #cell(actions)>
-            <b-button size="sm" variant="outline-secondary" class="mr-1">
+          <template #cell(actions)="row">
+            <b-button size="sm" variant="outline-secondary" class="mr-1" :to="`/maps/${row.item.id}/preview`">
               <b-icon-eye></b-icon-eye>
             </b-button>
-            <b-button size="sm" class="mr-1">
+            <b-button size="sm" class="mr-1" :to="`/maps/${row.item.id}/edit`">
               <b-icon-pencil></b-icon-pencil>
             </b-button>
           </template>
