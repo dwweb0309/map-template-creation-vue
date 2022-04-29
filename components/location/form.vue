@@ -18,7 +18,7 @@
           <b-form-input
             id="name"
             v-model="form.name"
-            placeholder="Map name"
+            placeholder="Location name"
             @input="CLEAR_ERROR"
             :state="getValidationState(validationContext)"
           />
@@ -165,6 +165,7 @@
       </b-row>
 
       <div class="text-right">
+        <b-button variant="outlined-primary" size="sm" @click="$router.go(-1)">Cancel</b-button>
         <b-button type="submit" variant="primary" size="sm" :disabled="loading">Submit</b-button>
       </div>
     </b-form>
@@ -180,6 +181,10 @@ export default {
     requiresAuth: true
   },
   props: {
+    locationId: {
+      type: Number,
+      requred: true
+    },
     mapId: {
       type: Number,
       requred: true
@@ -199,27 +204,22 @@ export default {
       state: '',
       photo: '',
       pdf: '',
-      squarefeet: null,
       description: '',
+      squarefeet: null,
       latitude: null,
       longitude: null
     }
   }),
-  async mounted () {
+  async fetch () {
     this.CLEAR_ERROR()
-    // if (this.isEdit) {
-    //   try {
-    //     const response = await this.getMap(this.$route.params.id)
-
-    //     this.settings.name = response.data.map.title
-    //     this.settings.description = response.data.map.description
-    //     this.settings.templateId = response.data.map.template_id
-    //     this.settings.seo = JSON.parse(response.data.map.seo_keywords)
-    //     this.settings.basemapSelector = response.data.map.map_selector
-    //   } catch (err) {
-    //     console.log(err)
-    //   }
-    // }
+    if (this.isEdit) {
+      try {
+        const response = await this.getLocation(this.locationId)
+        this.form = response.data.location
+      } catch (err) {
+        console.log(err)
+      }
+    }
   },
   methods: {
     ...mapActions('location', ['createLocation', 'updateLocation', 'getLocation']),
@@ -232,17 +232,19 @@ export default {
 
       try {
         this.loading = true
-        let response
 
         if (this.isEdit) {
-          // response = await this.updateMap({ ...this.settings, id: this.$route.params.id })
-          // this.$emit('updated', response.data.map)
+          const response = await this.updateLocation({ ...this.form, id: this.locationId })
+          const { location } = response.data
+
+          this.$router.push(`/maps/${location.map_id}/edit?mode=locations`)
         } else {
-          response = await this.createLocation({
+          const response = await this.createLocation({
             ...this.form,
             mapId: this.mapId
           })
-          this.$emit('created', response.data.location)
+
+          this.$router.push(`/maps/${this.mapId}/edit?mode=locations`)
         }
       } catch (err) {
         console.log(err)

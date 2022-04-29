@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <div class="mt-4">
     <b-container>
       <h5>Create a new map</h5>
       <b-card no-body>

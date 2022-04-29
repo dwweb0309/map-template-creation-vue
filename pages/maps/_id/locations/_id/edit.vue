@@ -1,8 +1,8 @@
 <template>
   <div class="mt-4">
     <b-container>
-      <h5>Create Location</h5>
-      <location-form :map-id="+$route.params.id" />
+      <h5>Edit Location</h5>
+      <location-form :location-id="+$route.params.id" :is-edit="true" />
     </b-container>
   </div>
 </template>

@@ -4,7 +4,7 @@ export default {
 
   // Global page headers: https://go.nuxtjs.dev/config-head
   head: {
-    title: 'frontend',
+    title: 'Premium Map',
     htmlAttrs: {
       lang: 'en'
     },
@@ -22,6 +22,8 @@ export default {
   css: [
     '@/assets/css/main.scss'
   ],
+
+  link: [{ rel:"stylesheet", type:"text/css", href:'https://api.mapbox.com/mapbox-gl-js/v2.8.2/mapbox-gl.css' }],
 
   // Plugins to run before rendering page: https://go.nuxtjs.dev/config-plugins
   plugins: [

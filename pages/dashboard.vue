@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <div class="mt-4">
     <b-container>
       <b-card>
         <template #header>
@@ -19,7 +19,7 @@
             <b-button size="sm" variant="outline-secondary" class="mr-1" :to="`/maps/${row.item.id}/preview`">
               <b-icon-eye></b-icon-eye>
             </b-button>
-            <b-button size="sm" class="mr-1" :to="`/maps/${row.item.id}/edit`">
+            <b-button size="sm" class="mr-1" :to="`/maps/${row.item.id}/edit?mode=settings`">
               <b-icon-pencil></b-icon-pencil>
             </b-button>
           </template>

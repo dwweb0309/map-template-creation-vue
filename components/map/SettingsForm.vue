@@ -90,6 +90,7 @@
       </b-form-group>
 
       <div class="text-right">
+        <b-button variant="outlined-primary" size="sm" to="/dashboard">Cancel</b-button>
         <b-button type="submit" variant="primary" size="sm" :disabled="loading">Submit</b-button>
       </div>
     </b-form>
