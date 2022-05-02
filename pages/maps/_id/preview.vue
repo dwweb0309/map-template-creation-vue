@@ -17,8 +17,7 @@
         size="sm"
       ></b-form-radio-group>
     </div>
-    <div id="map">
-    </div>
+    <div id="map"></div>
   </div>
 </template>
 
@@ -63,7 +62,7 @@ export default {
       }
     }
   },
-  async fetch() {
+  async mounted() {
     await this.getLocations(this.$route.params.id)
     this.initMap()
   },
