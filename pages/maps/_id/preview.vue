@@ -13,6 +13,8 @@
         :options="mapOptions"
         buttons
         @input="onMapModeChange"
+        button-variant="outline-primary"
+        size="sm"
       ></b-form-radio-group>
     </div>
     <div id="map">
@@ -61,8 +63,8 @@ export default {
       }
     }
   },
-  mounted() {
-    this.getLocations(this.$route.params.id)
+  async fetch() {
+    await this.getLocations(this.$route.params.id)
     this.initMap()
   },
   methods: {
@@ -71,36 +73,48 @@ export default {
       // mapboxgl.accessToken = 'pk.eyJ1IjoiZHd3ZWIwMzA5IiwiYSI6ImNsMWdjdWhxdDAxcXgzaWxubDlyYnV2b3YifQ.GbCstsimD2y-Oa1eQXfWDA'
       mapboxgl.accessToken = 'pk.eyJ1IjoibWFwc3RlciIsImEiOiJjbDJrdWt4ZnIwNm4zM2JzM2xvdTJjZnBnIn0.am-B5SLKHgGwEU1yKY992w'
 
+      let center = [-87.699329, 41.860092]
+
+      if (this.geojson.features.length)
+        center = this.geojson.features[0].geometry.coordinates
+
       this.map = new mapboxgl.Map({
         container: 'map',
         // style: 'mapbox://styles/dwweb0309/cl2n9cxfq000y14p06fnq6g21',
         style: 'mapbox://styles/mapster/ckpzzf6ee1jyg17qxen56map9',
-        center: [-87.699329, 41.860092],
-        zoom: 10,
-        attributionControl: true
+        center,
+        zoom: 8
       })
 
       this.map.addControl(new mapboxgl.NavigationControl());
 
       this.map.on('load', () => {
-        // this.map.addSource('addresses', {
-        //   type: 'geojson',
-        //   data: this.geojson,
-        //   cluster: true,
-        //   clusterMaxZoom: 14, // Max zoom to cluster points on
-        //   clusterRadius: 50 // Radius of each cluster when clustering points (defaults to 50)
-        // });
-        // this.map.addLayer({
-        //   id: 'addresses',
-        //   type: 'circle',
-        //   source: 'addresses',
-        //   paint: {
-        //     'circle-color': '#11b4da',
-        //     'circle-radius': 8,
-        //     'circle-stroke-width': 2,
-        //     'circle-stroke-color': '#0f0'
-        //   }
-        // });
+        this.map.addSource('addresses', {
+          type: 'geojson',
+          data: this.geojson,
+          cluster: true,
+          clusterMaxZoom: 14, // Max zoom to cluster points on
+          clusterRadius: 50 // Radius of each cluster when clustering points (defaults to 50)
+        });
+        this.map.addLayer({
+          id: 'addresses',
+          type: 'circle',
+          source: 'addresses',
+          paint: {
+            'circle-color': '#11b4da',
+            'circle-radius': 8,
+            'circle-stroke-width': 1,
+            'circle-stroke-color': '#0f0'
+          }
+        });
+
+        const bounds = new mapboxgl.LngLatBounds()
+
+        this.geojson.features.forEach((feature) => {
+            bounds.extend(feature.geometry.coordinates)
+        })
+
+        this.map.fitBounds(bounds, { padding: 100 })
       })
     },
     onMapModeChange() {
