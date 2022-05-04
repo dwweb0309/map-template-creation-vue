@@ -3,7 +3,7 @@
     <div class="control-toggler" @click="showControlbar = true"></div>
     <b-sidebar v-model="showControlbar" shadow no-header>
       <div class="py-2">
-        <map-control-panel />
+        <map-control-panel @selected="onLocationSelected" @reset-bounds="resetBounds" />
       </div>
       <div class="control-toggler right-positioned" @click="showControlbar = false"></div>
     </b-sidebar>
@@ -43,7 +43,8 @@ export default {
         { text: 'Street', value: 'ckpzzf6ee1jyg17qxen56map9' },
         { text: 'Satellite', value: 'cl2ktyiap000q15o8zm1ka0ly' },
         { text: 'Dark', value: 'ckd9gicgp06q51iny30d2j9m9' }
-      ]
+      ],
+      popup: null
     }
   },
   computed: {
@@ -51,9 +52,12 @@ export default {
     geojson() {
       return {
         type: 'FeatureCollection',
-        features: this.locations.map((location) => ({
+        features: this.locations.map((location, i) => ({
           type: 'Feature',
-          properties: null,
+          properties: {
+            index: i + 1,
+            name: location.name
+          },
           geometry: {
             type: 'Point',
             coordinates: [location.longitude, location.latitude]
@@ -90,34 +94,62 @@ export default {
       this.map.on('load', () => {
         this.map.addSource('addresses', {
           type: 'geojson',
-          data: this.geojson,
-          cluster: true,
-          clusterMaxZoom: 14, // Max zoom to cluster points on
-          clusterRadius: 50 // Radius of each cluster when clustering points (defaults to 50)
+          data: this.geojson
         });
         this.map.addLayer({
-          id: 'addresses',
+          id: 'addresses-circle',
           type: 'circle',
           source: 'addresses',
           paint: {
             'circle-color': '#11b4da',
-            'circle-radius': 8,
-            'circle-stroke-width': 1,
-            'circle-stroke-color': '#0f0'
+            'circle-radius': 16,
+            'circle-stroke-width': 2,
+            'circle-stroke-color': '#fff'
+          }
+        });
+        this.map.addLayer({
+          id: "addresses-label",
+          type: "symbol",
+          source: "addresses",
+          layout: {
+            'text-field': ['get', 'index'],
+            "text-size": 16
+          },
+          paint: {
+            'text-color': '#ffffff'
           }
         });
 
-        const bounds = new mapboxgl.LngLatBounds()
-
-        this.geojson.features.forEach((feature) => {
-            bounds.extend(feature.geometry.coordinates)
-        })
-
-        this.map.fitBounds(bounds, { padding: 100 })
+        this.resetBounds()
       })
+
+      this.map.on('click', 'addresses-circle', (e) => {
+        this.showPopUp(e.features[0].geometry.coordinates, e.features[0].properties.name)
+      });
+    },
+    showPopUp(coordinates, html) {
+      if (this.popup)
+        this.popup.remove()
+
+      this.popup = new mapboxgl.Popup()
+        .setLngLat(coordinates)
+        .setHTML(html)
+        .addTo(this.map)
     },
     onMapModeChange() {
       this.map.setStyle('mapbox://styles/mapster/' + this.mapOption);
+    },
+    onLocationSelected(location) {
+      this.showPopUp([location.longitude, location.latitude], location.name)
+    },
+    resetBounds() {
+      const bounds = new mapboxgl.LngLatBounds()
+
+      this.geojson.features.forEach((feature) => {
+        bounds.extend(feature.geometry.coordinates)
+      })
+
+      this.map.fitBounds(bounds, { padding: 80 })
     }
   }
 }
@@ -160,5 +192,8 @@ export default {
     right: 50px;
     top: 10px;
     border-radius: 10px;
+  }
+  .mapboxgl-popup {
+    width: 152px;
   }
 </style>

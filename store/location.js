@@ -15,6 +15,8 @@ export const actions = {
       const response = await this.$axios.get(`/locations?mapId=${mapId}`)
       
       commit('SET_LOCATIONS', response.data.locations)
+
+      return response
     } catch (err) {
       commit('SET_ERROR', err.response.data)
     }

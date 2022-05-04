@@ -14,6 +14,7 @@
       <b-list-group-item
         variant="danger"
         button
+        @click="$emit('reset-bounds')"
       >
         <div class="py-3">Reset Map Zoom</div>
       </b-list-group-item>
@@ -24,7 +25,7 @@
         variant="primary"
         class="d-flex justify-content-between align-items-center text-light"
         :active="selectedLocationId == location.id"
-        @click="selectedLocationId = location.id"
+        @click="onListClick(location)"
       >
         <div>
           <div class="h5">{{ location.name }}</div>
@@ -60,7 +61,21 @@ export default {
     this.getLocations(this.$route.params.id)
   },
   methods: {
-    ...mapActions('location', ['getLocations'])
+    ...mapActions('location', ['getLocations']),
+    onListClick(location) {
+      this.selectedLocationId = location.id
+      this.$emit('selected', location)
+    }
   }
 }
 </script>
+<style scoped>
+.list-group-item-danger {
+  color: #ffffff;
+  background-color: #d14a59;
+}
+.list-group-item-danger:hover {
+  color: #ffffff;
+  background-color: #dd3145;
+}
+</style>
