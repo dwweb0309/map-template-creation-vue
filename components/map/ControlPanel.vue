@@ -3,6 +3,11 @@
     <div class="px-3 py-2">
       <b-form-checkbox v-model="travel" switch class="text-uppercase">Tranvel Times</b-form-checkbox>
       <b-form-checkbox v-model="radius" switch class="text-uppercase">Radius Rings</b-form-checkbox>
+      <b-button-group size="sm" class="my-1">
+        <b-button variant="outline-primary"><b-icon-truck></b-icon-truck></b-button>
+        <b-button variant="outline-primary"><b-icon-piggy-bank></b-icon-piggy-bank></b-button>
+        <b-button variant="outline-primary"><b-icon-bicycle></b-icon-bicycle></b-button>
+      </b-button-group>
       <div class="mt-1">
         <label for="available-sqm" class="mb-0 text-uppercase">Available SQM</label>
         <b-form-input id="available-sqm" v-model="sqm" type="range" min="0" max="30000"></b-form-input>
@@ -39,13 +44,15 @@
 
 <script>
 import { mapState, mapMutations, mapActions } from 'vuex'
+import { BIcon, BIconTruck, BIconPiggyBank, BIconBicycle } from 'bootstrap-vue'
 
 export default {
   middleware: 'auth',
   meta: {
     requiresAuth: true
   },
-  props: {
+  components: {
+    BIcon, BIconTruck, BIconPiggyBank, BIconBicycle
   },
   data: () => ({
     loading: false,

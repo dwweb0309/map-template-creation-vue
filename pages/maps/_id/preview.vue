@@ -17,6 +17,21 @@
         size="sm"
       ></b-form-radio-group>
     </div>
+    <b-card id="details" img-src="https://www.71langridgestreet.com.au/dist/images/building-01.jpg" img-alt="Image" img-top bg-variant="primary" text-variant="white">
+      <b-card-text>
+        <h3>71 Langridge St</h3>
+        <small>71 Langridge St</small>
+        <hr>
+        <small>Levels available</small>
+        <h5>G, 1, 2, 3, 4, 5, 6</h5>
+        <small>Net Rent Range($/sqm)</small>
+        <h5>POA</h5>
+        <small>Owner</small>
+        <h5>Domain Hill</h5>
+        <small>Leaging agent</small>
+        <h5>Lemon Baxter</h5>
+      </b-card-text>
+    </b-card>
     <div id="map"></div>
   </div>
 </template>
@@ -86,7 +101,7 @@ export default {
         // style: 'mapbox://styles/dwweb0309/cl2n9cxfq000y14p06fnq6g21',
         style: 'mapbox://styles/mapster/ckpzzf6ee1jyg17qxen56map9',
         center,
-        zoom: 8
+        zoom: 18
       })
 
       this.map.addControl(new mapboxgl.NavigationControl());
@@ -96,6 +111,7 @@ export default {
           type: 'geojson',
           data: this.geojson
         });
+
         this.map.addLayer({
           id: 'addresses-circle',
           type: 'circle',
@@ -124,7 +140,7 @@ export default {
       })
 
       this.map.on('click', 'addresses-circle', (e) => {
-        this.showPopUp(e.features[0].geometry.coordinates, e.features[0].properties.name)
+        this.setLocationSelection(e.features[0])
       });
     },
     showPopUp(coordinates, html) {
@@ -136,11 +152,29 @@ export default {
         .setHTML(html)
         .addTo(this.map)
     },
+    setLocationSelection(feature) {
+      this.showPopUp(feature.geometry.coordinates, feature.properties.name)
+      this.showCircles(feature)
+      this.map.flyTo({
+        center: feature.geometry.coordinates,
+        zoom: 12,
+        speed: 1.2
+      })
+    },
     onMapModeChange() {
       this.map.setStyle('mapbox://styles/mapster/' + this.mapOption);
     },
     onLocationSelected(location) {
-      this.showPopUp([location.longitude, location.latitude], location.name)
+      this.setLocationSelection({
+        type: 'Feature',
+        properties: {
+          name: location.name
+        },
+        geometry: {
+          type: 'Point',
+          coordinates: [location.longitude, location.latitude]
+        }
+      })
     },
     resetBounds() {
       const bounds = new mapboxgl.LngLatBounds()
@@ -150,6 +184,64 @@ export default {
       })
 
       this.map.fitBounds(bounds, { padding: 80 })
+    },
+    showCircles(feature) {
+      const metersToPixelsAtMaxZoom = (meters, latitude) => meters / 0.075 / Math.cos(latitude * Math.PI / 180)
+      const meters = [1000, 3000, 5000]
+      const source = this.map.getSource('point-5000')
+
+      if (source) {
+        source.setData({
+          type: "FeatureCollection",
+          features: [{
+            type: "Feature",
+            properties: {
+              title: 'aaaaaa'
+            },
+            geometry: feature.geometry
+          }]
+        })
+      } else {
+        this.map.addSource('point-5000', {
+          type: 'geojson',
+          data: {
+            type: "FeatureCollection",
+            features: [{
+              type: "Feature",
+              properties: {
+                title: 'aaaaaa'
+              },
+              geometry: feature.geometry
+            }]
+          }
+        })
+      }
+
+      meters.forEach((meter) => {
+        const layerId = `circle-${meter}`
+
+        if (this.map.getLayer(layerId)) {
+          this.map.removeLayer(layerId)
+        }
+
+        this.map.addLayer({
+          id: layerId,
+          type: 'circle',
+          source: 'point-5000',
+          paint: {
+            'circle-radius': {
+              stops: [
+                [0, 0],
+                [20, metersToPixelsAtMaxZoom(meter, feature.geometry.coordinates[1])]
+              ],
+              base: 2
+            },
+            'circle-opacity': 0,
+            'circle-stroke-width': 2,
+            'circle-stroke-color': '#11b4da'
+          }
+        })
+      })
     }
   }
 }
@@ -192,6 +284,18 @@ export default {
     right: 50px;
     top: 10px;
     border-radius: 10px;
+  }
+  #details {
+    display: flex;
+    position: absolute;
+    width: 300px;
+    z-index: 1;
+    right: 50px;
+    top: 50px;
+  }
+  #details img {
+    height: 200px;
+    object-fit: cover;
   }
   .mapboxgl-popup {
     width: 152px;
