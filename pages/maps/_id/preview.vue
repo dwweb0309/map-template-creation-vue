@@ -3,7 +3,11 @@
     <div class="control-toggler" @click="showControlbar = true"></div>
     <b-sidebar v-model="showControlbar" shadow no-header>
       <div class="py-2">
-        <map-control-panel @selected="onLocationSelected" @reset-bounds="resetBounds" />
+        <map-control-panel
+          @selected="onLocationSelected"
+          @reset-bounds="resetBounds"
+          @iso-input="getIso"
+        />
       </div>
       <div class="control-toggler right-positioned" @click="showControlbar = false"></div>
     </b-sidebar>
@@ -59,7 +63,8 @@ export default {
         { text: 'Satellite', value: 'cl2ktyiap000q15o8zm1ka0ly' },
         { text: 'Dark', value: 'ckd9gicgp06q51iny30d2j9m9' }
       ],
-      popup: null
+      popup: null,
+      selectedLocation: null
     }
   },
   computed: {
@@ -88,13 +93,16 @@ export default {
   methods: {
     ...mapActions('location', ['getLocations']),
     initMap() {
+      if (this.locations.length)
+        this.selectedLocation = this.locations[0]
+
       // mapboxgl.accessToken = 'pk.eyJ1IjoiZHd3ZWIwMzA5IiwiYSI6ImNsMWdjdWhxdDAxcXgzaWxubDlyYnV2b3YifQ.GbCstsimD2y-Oa1eQXfWDA'
       mapboxgl.accessToken = 'pk.eyJ1IjoibWFwc3RlciIsImEiOiJjbDJrdWt4ZnIwNm4zM2JzM2xvdTJjZnBnIn0.am-B5SLKHgGwEU1yKY992w'
 
       let center = [-87.699329, 41.860092]
 
-      if (this.geojson.features.length)
-        center = this.geojson.features[0].geometry.coordinates
+      if (this.selectedLocation)
+        center = [this.selectedLocation.longitude, this.selectedLocation.latitude]
 
       this.map = new mapboxgl.Map({
         container: 'map',
@@ -111,6 +119,24 @@ export default {
           type: 'geojson',
           data: this.geojson
         });
+        this.map.addSource('iso', {
+          type: 'geojson',
+          data: {
+            'type': 'FeatureCollection',
+            'features': []
+          }
+        })
+
+        this.map.addLayer({
+          'id': 'isoLayer',
+          'type': 'fill',
+          'source': 'iso',
+          'layout': {},
+          'paint': {
+            'fill-color': '#5a3fc0',
+            'fill-opacity': 0.3
+          }
+        }, 'poi-label')
 
         this.map.addLayer({
           id: 'addresses-circle',
@@ -137,6 +163,7 @@ export default {
         });
 
         this.resetBounds()
+        // this.getIso()
       })
 
       this.map.on('click', 'addresses-circle', (e) => {
@@ -165,6 +192,8 @@ export default {
       this.map.setStyle('mapbox://styles/mapster/' + this.mapOption);
     },
     onLocationSelected(location) {
+      this.selectedLocation = location
+
       this.setLocationSelection({
         type: 'Feature',
         properties: {
@@ -242,6 +271,25 @@ export default {
           }
         })
       })
+    },
+    async getIso(params) {
+      const urlBase = 'https://api.mapbox.com/isochrone/v1/mapbox/'
+      const lon = this.selectedLocation.longitude
+      const lat = this.selectedLocation.latitude
+      const { profile, minutes } = params
+
+      const lngLat = {
+        lon,
+        lat
+      }
+
+      const query = await fetch(
+      `${urlBase}${profile}/${lon},${lat}?contours_minutes=${minutes}&polygons=true&access_token=${mapboxgl.accessToken}`,
+      { method: 'GET' }
+      );
+      const data = await query.json();
+      // Set the 'iso' source's data to what's returned by the API query
+      this.map.getSource('iso').setData(data);
     }
   }
 }

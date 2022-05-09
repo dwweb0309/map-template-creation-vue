@@ -3,11 +3,28 @@
     <div class="px-3 py-2">
       <b-form-checkbox v-model="travel" switch class="text-uppercase">Tranvel Times</b-form-checkbox>
       <b-form-checkbox v-model="radius" switch class="text-uppercase">Radius Rings</b-form-checkbox>
-      <b-button-group size="sm" class="my-1">
-        <b-button variant="outline-primary"><b-icon-truck></b-icon-truck></b-button>
-        <b-button variant="outline-primary"><b-icon-piggy-bank></b-icon-piggy-bank></b-button>
-        <b-button variant="outline-primary"><b-icon-bicycle></b-icon-bicycle></b-button>
-      </b-button-group>
+      <b-form-group class="mt-2">
+        <b-form-radio-group
+          v-model="travelMode"
+          :options="['walking', 'cycling', 'driving']"
+          buttons
+          @input="onTravelModeChanged"
+          @click="onTravelModeChanged"
+          button-variant="outline-primary"
+          size="sm"
+        ></b-form-radio-group>
+      </b-form-group>
+      <b-form-group label="Drive Time Minutes" class="mt-2">
+        <b-form-radio-group
+          v-model="minutes"
+          :options="['5', '10', '15']"
+          buttons
+          @input="onTravelModeChanged"
+          @click="onTravelModeChanged"
+          button-variant="outline-primary"
+          size="sm"
+        ></b-form-radio-group>
+      </b-form-group>
       <div class="mt-1">
         <label for="available-sqm" class="mb-0 text-uppercase">Available SQM</label>
         <b-form-input id="available-sqm" v-model="sqm" type="range" min="0" max="30000"></b-form-input>
@@ -59,7 +76,9 @@ export default {
     travel: false,
     radius: false,
     sqm: 2,
-    selectedLocationId: null
+    selectedLocationId: null,
+    travelMode: null,
+    minutes: null,
   }),
   computed: {
     ...mapState('location', ['locations'])
@@ -72,6 +91,15 @@ export default {
     onListClick(location) {
       this.selectedLocationId = location.id
       this.$emit('selected', location)
+    },
+    onTravelModeChanged() {
+      this.$nextTick(() => {
+        if (this.travelMode && this.minutes)
+          this.$emit('iso-input', {
+            profile: this.travelMode,
+            minutes: this.minutes
+          })
+      })
     }
   }
 }
