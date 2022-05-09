@@ -14,17 +14,6 @@
           size="sm"
         ></b-form-radio-group>
       </b-form-group>
-      <b-form-group label="Drive Time Minutes" class="mt-2">
-        <b-form-radio-group
-          v-model="minutes"
-          :options="['5', '10', '15']"
-          buttons
-          @input="onTravelModeChanged"
-          @click="onTravelModeChanged"
-          button-variant="outline-primary"
-          size="sm"
-        ></b-form-radio-group>
-      </b-form-group>
       <div class="mt-1">
         <label for="available-sqm" class="mb-0 text-uppercase">Available SQM</label>
         <b-form-input id="available-sqm" v-model="sqm" type="range" min="0" max="30000"></b-form-input>
@@ -56,6 +45,21 @@
         <div class="h1">{{ i + 1 }}</div>
       </b-list-group-item>
     </b-list-group>
+
+    <b-card id="minutes" bg-variant="primary" text-variant="white">
+      <b-card-text>
+        <div>Drive Time In Minutes</div>
+        <b-button-group style="width: 200px;">
+          <b-button
+            v-for="(option, i) in minuteOptions"
+            :key="i"
+            size="sm"
+            :style="`background-color: ${option.variant}; border-color: ${option.variant};`"
+            @click="minutes = option.value; onTravelModeChanged()"
+          >{{ option.text }}</b-button>
+        </b-button-group>
+      </b-card-text>
+    </b-card>
   </div>
 </template>
 
@@ -78,7 +82,20 @@ export default {
     sqm: 2,
     selectedLocationId: null,
     travelMode: null,
-    minutes: null,
+    minutes: 5,
+    minuteOptions: [{
+      text: '5',
+      value: 5,
+      variant: '#3c1483'
+    }, {
+      text: '10',
+      value: 10,
+      variant: '#532d97'
+    }, {
+      text: '15',
+      value: 15,
+      variant: '#9880c3'
+    }]
   }),
   computed: {
     ...mapState('location', ['locations'])
@@ -112,5 +129,14 @@ export default {
 .list-group-item-danger:hover {
   color: #ffffff;
   background-color: #dd3145;
+}
+#minutes {
+  position: absolute;
+  z-index: 2;
+  left: 340px;
+  bottom: 20px;
+}
+#minutes .card-body {
+  padding: 0.6rem;
 }
 </style>

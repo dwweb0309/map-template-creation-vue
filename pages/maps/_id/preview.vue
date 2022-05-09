@@ -9,7 +9,7 @@
           @iso-input="getIso"
         />
       </div>
-      <div class="control-toggler right-positioned" @click="showControlbar = false"></div>
+      <div class="control-toggler right-positioned"></div>
     </b-sidebar>
     <div id="menu">
       <b-form-radio-group
