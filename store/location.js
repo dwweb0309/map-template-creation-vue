@@ -5,15 +5,18 @@ export const state = () => ({
 
 export const mutations = {
   SET_ERROR (state, error) { state.error = error },
-  CLEAR_ERROR (state) { state.error = null }
+  CLEAR_ERROR (state) { state.error = null },
+  SET_LOCATIONS(state, locations) { state.locations = locations }
 }
 
 export const actions = {
-  async getLocations ({ commit }) {
+  async getLocations ({ commit }, mapId) {
     try {
-      const response = await this.$axios.get('/locations')
+      const response = await this.$axios.get(`/locations?mapId=${mapId}`)
       
       commit('SET_LOCATIONS', response.data.locations)
+
+      return response
     } catch (err) {
       commit('SET_ERROR', err.response.data)
     }
@@ -29,7 +32,7 @@ export const actions = {
   },
   async updateLocation ({ commit }, payload) {
     try {
-      const response = await this.$axios.put(`/${payload.mapId}/locations/${payload.id}`, payload)
+      const response = await this.$axios.put(`/locations/${payload.id}`, payload)
 
       return response
     } catch (err) {
@@ -39,7 +42,7 @@ export const actions = {
   },
   async getLocation ({ commit }, id) {
     try {
-      const response = await this.$axios.get(`/${payload.mapId}/locations/${id}`)
+      const response = await this.$axios.get(`/locations/${id}`)
       
       return response
     } catch (err) {

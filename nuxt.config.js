@@ -4,7 +4,7 @@ export default {
 
   // Global page headers: https://go.nuxtjs.dev/config-head
   head: {
-    title: 'frontend',
+    title: 'Premium Map',
     htmlAttrs: {
       lang: 'en'
     },
@@ -22,7 +22,7 @@ export default {
   css: [
     '@/assets/css/main.scss'
   ],
-
+  
   // Plugins to run before rendering page: https://go.nuxtjs.dev/config-plugins
   plugins: [
     '~/plugins/vee-validate',
@@ -58,7 +58,7 @@ export default {
   },
   // Axios module configuration: https://go.nuxtjs.dev/config-axios
   axios: {
-    baseURL: 'http://localhost:3030/api/v1/'
+    baseURL: process.env.BASE_URL || 'http://localhost:3030/api/v1/'
   },
 
   // Build Configuration: https://go.nuxtjs.dev/config-build

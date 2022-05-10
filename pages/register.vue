@@ -62,7 +62,7 @@
 
           <b-button type="submit" variant="primary" class="mr-auto" :disabled="submittingAuth">
             <b-spinner v-if="submittingAuth" small />
-            Login
+            Register
           </b-button>
 
           <div class="d-flex mt-2 justify-content-end">
