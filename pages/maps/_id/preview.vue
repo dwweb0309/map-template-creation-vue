@@ -1,15 +1,16 @@
 <template>
   <div>
-    <div class="control-toggler" @click="showControlbar = true"></div>
-    <b-sidebar v-model="showControlbar" shadow no-header>
+    <b-sidebar visible shadow no-header>
       <div class="py-2">
         <map-control-panel
           @selected="onLocationSelected"
           @reset-bounds="resetBounds"
+          @travel-times-toggled="toggleTravelTimes"
+          @radius-rings-toggled="toggleRadiusRings"
           @iso-input="getIso"
         />
       </div>
-      <div class="control-toggler right-positioned"></div>
+      <div class="control-toggler right-positioned" @click="toggleSidebar"></div>
     </b-sidebar>
     <div id="menu">
       <b-form-radio-group
@@ -63,6 +64,19 @@ export default {
         { text: 'Satellite', value: 'cl2ktyiap000q15o8zm1ka0ly' },
         { text: 'Dark', value: 'ckd9gicgp06q51iny30d2j9m9' }
       ],
+      minuteOptions: [{
+        text: '5',
+        value: 5,
+        variant: '#3c1483'
+      }, {
+        text: '10',
+        value: 10,
+        variant: '#532d97'
+      }, {
+        text: '15',
+        value: 15,
+        variant: '#9880c3'
+      }],
       popup: null,
       selectedLocation: null
     }
@@ -112,31 +126,34 @@ export default {
         zoom: 18
       })
 
-      this.map.addControl(new mapboxgl.NavigationControl());
+      this.map.addControl(new mapboxgl.NavigationControl(), 'top-left');
 
       this.map.on('load', () => {
         this.map.addSource('addresses', {
           type: 'geojson',
           data: this.geojson
-        });
-        this.map.addSource('iso', {
-          type: 'geojson',
-          data: {
-            'type': 'FeatureCollection',
-            'features': []
-          }
         })
 
-        this.map.addLayer({
-          'id': 'isoLayer',
-          'type': 'fill',
-          'source': 'iso',
-          'layout': {},
-          'paint': {
-            'fill-color': '#5a3fc0',
-            'fill-opacity': 0.3
-          }
-        }, 'poi-label')
+        this.minuteOptions.forEach((option) => {
+          this.map.addSource(`iso-${option.value}`, {
+            type: 'geojson',
+            data: {
+              'type': 'FeatureCollection',
+              'features': []
+            }
+          })
+
+          this.map.addLayer({
+            'id': `iso-layer-${option.value}`,
+            'type': 'fill',
+            'source': `iso-${option.value}`,
+            'layout': {},
+            'paint': {
+              'fill-color': option.variant,
+              'fill-opacity': 0.3
+            }
+          }, 'poi-label')
+        })
 
         this.map.addLayer({
           id: 'addresses-circle',
@@ -163,7 +180,6 @@ export default {
         });
 
         this.resetBounds()
-        // this.getIso()
       })
 
       this.map.on('click', 'addresses-circle', (e) => {
@@ -272,24 +288,43 @@ export default {
         })
       })
     },
-    async getIso(params) {
+    async getIso(profile) {
       const urlBase = 'https://api.mapbox.com/isochrone/v1/mapbox/'
       const lon = this.selectedLocation.longitude
       const lat = this.selectedLocation.latitude
-      const { profile, minutes } = params
 
-      const lngLat = {
-        lon,
-        lat
+      this.$axios.get(`${urlBase}${profile}/${lon},${lat}?contours_minutes=5&polygons=true&access_token=${mapboxgl.accessToken}`).then(async (res) => {
+        this.map.getSource('iso-5').setData(res.data)
+      })
+      this.$axios.get(`${urlBase}${profile}/${lon},${lat}?contours_minutes=10&polygons=true&access_token=${mapboxgl.accessToken}`).then(async (res) => {
+        this.map.getSource('iso-10').setData(res.data)
+      })
+      this.$axios.get(`${urlBase}${profile}/${lon},${lat}?contours_minutes=15&polygons=true&access_token=${mapboxgl.accessToken}`).then(async (res) => {
+        this.map.getSource('iso-15').setData(res.data)
+      })
+    },
+    toggleSidebar() {
+      this.toggleSidebar = !this.toggleSidebar
+
+      if (!this.toggleSidebar) {
+        document.getElementsByClassName('b-sidebar')[0].style.left = '-320px'
+        document.getElementsByClassName('mapboxgl-ctrl-top-left')[0].style.left = '0'
+        document.getElementById('menu').style.left = '46px'
+      } else {
+        document.getElementsByClassName('b-sidebar')[0].style.left = '0'
+        document.getElementsByClassName('mapboxgl-ctrl-top-left')[0].style.left = '328px'
+        document.getElementById('menu').style.left = '374px'
       }
-
-      const query = await fetch(
-      `${urlBase}${profile}/${lon},${lat}?contours_minutes=${minutes}&polygons=true&access_token=${mapboxgl.accessToken}`,
-      { method: 'GET' }
-      );
-      const data = await query.json();
-      // Set the 'iso' source's data to what's returned by the API query
-      this.map.getSource('iso').setData(data);
+    },
+    toggleTravelTimes(val) {
+      this.map.setLayoutProperty('iso-layer-5', 'visibility', val ? 'visible' : 'none')
+      this.map.setLayoutProperty('iso-layer-10', 'visibility', val ? 'visible' : 'none')
+      this.map.setLayoutProperty('iso-layer-15', 'visibility', val ? 'visible' : 'none')
+    },
+    toggleRadiusRings(val) {
+      this.map.setLayoutProperty('circle-1000', 'visibility', val ? 'visible' : 'none')
+      this.map.setLayoutProperty('circle-3000', 'visibility', val ? 'visible' : 'none')
+      this.map.setLayoutProperty('circle-5000', 'visibility', val ? 'visible' : 'none')
     }
   }
 }
@@ -297,12 +332,6 @@ export default {
 
 <style>
   #map {
-    /* height: 100vh;
-    top: 64px;
-    max-height: calc(100% - 64px);
-    transform: translateX(0%);
-    width: 100%;
-    padding: 0; */
     position: absolute;
     top: 0;
     bottom: 0;
@@ -329,7 +358,7 @@ export default {
     background: #efefef;
     font-family: 'Open Sans', sans-serif;
     z-index: 1;
-    right: 50px;
+    left: 374px;
     top: 10px;
     border-radius: 10px;
   }
@@ -338,8 +367,8 @@ export default {
     position: absolute;
     width: 300px;
     z-index: 1;
-    right: 50px;
-    top: 50px;
+    right: 12px;
+    top: 10px;
   }
   #details img {
     height: 200px;
@@ -347,5 +376,8 @@ export default {
   }
   .mapboxgl-popup {
     width: 152px;
+  }
+  .mapboxgl-ctrl-top-left {
+    left: 328px;
   }
 </style>

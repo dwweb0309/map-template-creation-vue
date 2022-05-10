@@ -1,10 +1,11 @@
 <template>
   <div class="mt-2">
     <div class="px-3 py-2">
-      <b-form-checkbox v-model="travel" switch class="text-uppercase">Tranvel Times</b-form-checkbox>
-      <b-form-checkbox v-model="radius" switch class="text-uppercase">Radius Rings</b-form-checkbox>
+      <b-form-checkbox v-model="travel" switch class="text-uppercase" @input="$emit('travel-times-toggled', $event)">Tranvel Times</b-form-checkbox>
+      <b-form-checkbox v-model="radius" switch class="text-uppercase" @input="$emit('radius-rings-toggled', $event)">Radius Rings</b-form-checkbox>
       <b-form-group class="mt-2">
         <b-form-radio-group
+          v-if="travel"
           v-model="travelMode"
           :options="['walking', 'cycling', 'driving']"
           buttons
@@ -55,7 +56,7 @@
             :key="i"
             size="sm"
             :style="`background-color: ${option.variant}; border-color: ${option.variant};`"
-            @click="minutes = option.value; onTravelModeChanged()"
+            disabled
           >{{ option.text }}</b-button>
         </b-button-group>
       </b-card-text>
@@ -77,12 +78,11 @@ export default {
   },
   data: () => ({
     loading: false,
-    travel: false,
-    radius: false,
+    travel: true,
+    radius: true,
     sqm: 2,
     selectedLocationId: null,
     travelMode: null,
-    minutes: 5,
     minuteOptions: [{
       text: '5',
       value: 5,
@@ -111,11 +111,8 @@ export default {
     },
     onTravelModeChanged() {
       this.$nextTick(() => {
-        if (this.travelMode && this.minutes)
-          this.$emit('iso-input', {
-            profile: this.travelMode,
-            minutes: this.minutes
-          })
+        if (this.travelMode)
+          this.$emit('iso-input', this.travelMode)
       })
     }
   }
