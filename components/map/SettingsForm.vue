@@ -47,6 +47,15 @@
         />
       </b-form-group>
 
+      <b-form-group label="URL(Copy)" label-for="url">
+        <b-input-group>
+          <b-form-input id="url" v-model="settings.url" readonly />
+          <b-input-group-append>
+            <b-button><b-icon-files></b-icon-files></b-button>
+          </b-input-group-append>
+        </b-input-group>
+      </b-form-group>
+
       <validation-provider
         name="Map Template"
         rules="required"
@@ -71,6 +80,35 @@
           </b-form-invalid-feedback>
         </b-form-group>
       </validation-provider>
+      
+      <b-form-group label="Drivetime Rings">
+        <div v-for="(drivetimeRing, i) in settings.drivetimeRings" :key="i" class="d-flex ml-4 mt-1 align-items-center">
+          <label style="width: 60px;">{{ drivetimeRing.text }}</label>
+          <b-form-radio-group
+            v-model="drivetimeRing.on"
+            :options="[{ text: 'On', value: true }, { text: 'Off', value: false }]"
+            buttons
+            button-variant="outline-primary"
+            class="ml-2"
+          ></b-form-radio-group>
+        </div>
+      </b-form-group>
+
+      <b-form-group label="Distance Rings">
+        <div v-for="(distanceRing, i) in settings.distanceRings" :key="i" class="d-flex ml-4 mt-1">
+          <b-input-group append="miles" style="width: 200px;">
+            <b-form-input v-model="distanceRing.miles"></b-form-input>
+          </b-input-group>
+          <b-form-radio-group
+            v-model="distanceRing.on"
+            :options="[{ text: 'On', value: true }, { text: 'Off', value: false }]"
+            buttons
+            button-variant="outline-primary"
+            class="ml-2"
+          ></b-form-radio-group>
+        </div>
+      </b-form-group>
+      
       <b-form-group
         label="Basemap Selector:"
         label-for="basemap-selector"
@@ -99,11 +137,15 @@
 
 <script>
 import { mapState, mapMutations, mapActions } from 'vuex'
+import { BIcon, BIconFiles } from 'bootstrap-vue'
 
 export default {
   middleware: 'auth',
   meta: {
     requiresAuth: true
+  },
+  components: {
+    BIcon, BIconFiles
   },
   props: {
     isEdit: {
@@ -115,9 +157,27 @@ export default {
     loading: false,
     settings: {
       name: '',
+      url: '',
       description: '',
       templateId: null,
       seo: [],
+      distanceRings: [{
+        on: false,
+        miles: 0
+      }, {
+        on: false,
+        miles: 0
+      }, {
+        on: false,
+        miles: 0
+      }],
+      drivetimeRings: [{
+        on: false,
+        text: 'Walking'
+      }, {
+        on: false,
+        text: 'Driving'
+      }],
       addressFinder: false,
       basemapSelector: false
     }
@@ -133,6 +193,7 @@ export default {
         const response = await this.getMap(this.$route.params.id)
 
         this.settings.name = response.data.map.title
+        this.settings.url = `${window.location.origin}/maps/${this.$route.params.id}/preview`
         this.settings.description = response.data.map.description
         this.settings.templateId = response.data.map.template_id
         this.settings.seo = JSON.parse(response.data.map.seo_keywords)

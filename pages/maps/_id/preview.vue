@@ -43,6 +43,7 @@
 
 <script>
 import mapboxgl from '!mapbox-gl'
+import * as turf from '@turf/turf'
 import 'mapbox-gl/dist/mapbox-gl.css'
 import { mapState, mapActions } from 'vuex'
 import { BIcon, BIconBicycle, BIconMinecart, BIconOption } from 'bootstrap-vue'
@@ -77,6 +78,18 @@ export default {
         value: 15,
         variant: '#9880c3'
       }],
+      meters: [
+        {
+          radius: 1,
+          color: '#11b4da'
+        }, {
+          radius: 3,
+          color: '#11b4da'
+        }, {
+          radius: 5,
+          color: '#11b4da'
+        }
+      ],
       popup: null,
       selectedLocation: null
     }
@@ -107,10 +120,9 @@ export default {
   methods: {
     ...mapActions('location', ['getLocations']),
     initMap() {
-      if (this.locations.length)
+      if (this.locations.length && !this.selectedLocation)
         this.selectedLocation = this.locations[0]
 
-      // mapboxgl.accessToken = 'pk.eyJ1IjoiZHd3ZWIwMzA5IiwiYSI6ImNsMWdjdWhxdDAxcXgzaWxubDlyYnV2b3YifQ.GbCstsimD2y-Oa1eQXfWDA'
       mapboxgl.accessToken = 'pk.eyJ1IjoibWFwc3RlciIsImEiOiJjbDJrdWt4ZnIwNm4zM2JzM2xvdTJjZnBnIn0.am-B5SLKHgGwEU1yKY992w'
 
       let center = [-87.699329, 41.860092]
@@ -120,8 +132,7 @@ export default {
 
       this.map = new mapboxgl.Map({
         container: 'map',
-        // style: 'mapbox://styles/dwweb0309/cl2n9cxfq000y14p06fnq6g21',
-        style: 'mapbox://styles/mapster/ckpzzf6ee1jyg17qxen56map9',
+        style: 'mapbox://styles/mapster/' + this.mapOption,
         center,
         zoom: 18
       })
@@ -129,11 +140,7 @@ export default {
       this.map.addControl(new mapboxgl.NavigationControl(), 'top-left');
 
       this.map.on('load', () => {
-        this.map.addSource('addresses', {
-          type: 'geojson',
-          data: this.geojson
-        })
-
+        // iso layer
         this.minuteOptions.forEach((option) => {
           this.map.addSource(`iso-${option.value}`, {
             type: 'geojson',
@@ -153,6 +160,12 @@ export default {
               'fill-opacity': 0.3
             }
           }, 'poi-label')
+        })
+
+        // locations markers
+        this.map.addSource('addresses', {
+          type: 'geojson',
+          data: this.geojson
         })
 
         this.map.addLayer({
@@ -179,6 +192,32 @@ export default {
           }
         });
 
+        // circles around location
+        this.meters.forEach((meter) => {
+          const centr = turf.point(center);
+          const radius = meter.radius;
+          const options = {
+            steps: 80,
+            units: 'kilometers'
+          }
+  
+          const circle = turf.circle(centr, radius, options);
+          this.map.addLayer({
+            id: `circle-${meter.radius}`,
+            type: 'line',
+            source: {
+              type: 'geojson',
+              data: circle
+            },
+            paint: {
+              'line-color': meter.color,
+              'line-opacity': 1,
+              'line-width': 2
+            }
+          })
+        })
+
+        // show all locations in the screen
         this.resetBounds()
       })
 
@@ -205,7 +244,8 @@ export default {
       })
     },
     onMapModeChange() {
-      this.map.setStyle('mapbox://styles/mapster/' + this.mapOption);
+      this.initMap()
+      // this.map.setStyle('mapbox://styles/mapster/' + this.mapOption);
     },
     onLocationSelected(location) {
       this.selectedLocation = location
@@ -231,62 +271,76 @@ export default {
       this.map.fitBounds(bounds, { padding: 80 })
     },
     showCircles(feature) {
-      const metersToPixelsAtMaxZoom = (meters, latitude) => meters / 0.075 / Math.cos(latitude * Math.PI / 180)
-      const meters = [1000, 3000, 5000]
-      const source = this.map.getSource('point-5000')
-
-      if (source) {
-        source.setData({
-          type: "FeatureCollection",
-          features: [{
-            type: "Feature",
-            properties: {
-              title: 'aaaaaa'
-            },
-            geometry: feature.geometry
-          }]
-        })
-      } else {
-        this.map.addSource('point-5000', {
-          type: 'geojson',
-          data: {
-            type: "FeatureCollection",
-            features: [{
-              type: "Feature",
-              properties: {
-                title: 'aaaaaa'
-              },
-              geometry: feature.geometry
-            }]
-          }
-        })
-      }
-
-      meters.forEach((meter) => {
-        const layerId = `circle-${meter}`
-
-        if (this.map.getLayer(layerId)) {
-          this.map.removeLayer(layerId)
+      this.meters.forEach((meter) => {
+        const centr = turf.point(feature.geometry.coordinates);
+        const radius = meter.radius;
+        const options = {
+          steps: 80,
+          units: 'kilometers'
         }
+        const circle = turf.circle(centr, radius, options);
+        const source = this.map.getSource(`circle-${meter.radius}`)
 
-        this.map.addLayer({
-          id: layerId,
-          type: 'circle',
-          source: 'point-5000',
-          paint: {
-            'circle-radius': {
-              stops: [
-                [0, 0],
-                [20, metersToPixelsAtMaxZoom(meter, feature.geometry.coordinates[1])]
-              ],
-              base: 2
-            },
-            'circle-opacity': 0,
-            'circle-stroke-width': 2,
-            'circle-stroke-color': '#11b4da'
-          }
-        })
+        if (source) {
+          source.setData(circle)
+        }
       })
+      // const metersToPixelsAtMaxZoom = (meters, latitude) => meters / 0.075 / Math.cos(latitude * Math.PI / 180)
+      // const meters = [1000, 3000, 5000]
+      // const source = this.map.getSource('point-5000')
+
+      // if (source) {
+      //   source.setData({
+      //     type: "FeatureCollection",
+      //     features: [{
+      //       type: "Feature",
+      //       properties: {
+      //         title: 'aaaaaa'
+      //       },
+      //       geometry: feature.geometry
+      //     }]
+      //   })
+      // } else {
+      //   this.map.addSource('point-5000', {
+      //     type: 'geojson',
+      //     data: {
+      //       type: "FeatureCollection",
+      //       features: [{
+      //         type: "Feature",
+      //         properties: {
+      //           title: 'aaaaaa'
+      //         },
+      //         geometry: feature.geometry
+      //       }]
+      //     }
+      //   })
+      // }
+
+      // meters.forEach((meter) => {
+      //   const layerId = `circle-${meter}`
+
+      //   if (this.map.getLayer(layerId)) {
+      //     this.map.removeLayer(layerId)
+      //   }
+
+      //   this.map.addLayer({
+      //     id: layerId,
+      //     type: 'circle',
+      //     source: 'point-5000',
+      //     paint: {
+      //       'circle-radius': {
+      //         stops: [
+      //           [0, 0],
+      //           [20, metersToPixelsAtMaxZoom(meter, feature.geometry.coordinates[1])]
+      //         ],
+      //         base: 2
+      //       },
+      //       'circle-opacity': 0,
+      //       'circle-stroke-width': 2,
+      //       'circle-stroke-color': '#11b4da'
+      //     }
+      //   })
+      // })
     },
     async getIso(profile) {
       const urlBase = 'https://api.mapbox.com/isochrone/v1/mapbox/'
@@ -322,9 +376,9 @@ export default {
       this.map.setLayoutProperty('iso-layer-15', 'visibility', val ? 'visible' : 'none')
     },
     toggleRadiusRings(val) {
-      this.map.setLayoutProperty('circle-1000', 'visibility', val ? 'visible' : 'none')
-      this.map.setLayoutProperty('circle-3000', 'visibility', val ? 'visible' : 'none')
-      this.map.setLayoutProperty('circle-5000', 'visibility', val ? 'visible' : 'none')
+      this.map.setLayoutProperty('circle-1', 'visibility', val ? 'visible' : 'none')
+      this.map.setLayoutProperty('circle-3', 'visibility', val ? 'visible' : 'none')
+      this.map.setLayoutProperty('circle-5', 'visibility', val ? 'visible' : 'none')
     }
   }
 }
