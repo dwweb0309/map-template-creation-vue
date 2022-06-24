@@ -18,7 +18,6 @@
 </template>
 
 <script>
-import { mapState, mapActions } from 'vuex'
 import { BIcon, BIconPlus, BIconPencil, BIconTrash } from 'bootstrap-vue'
 export default {
   middleware: 'auth',

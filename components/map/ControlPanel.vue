@@ -6,13 +6,12 @@
       <b-form-group class="mt-2">
         <b-form-radio-group
           v-if="travel"
-          v-model="travelMode"
-          :options="['walking', 'cycling', 'driving']"
+          :checked="value.travelMode"
+          :options="travelModeOptions"
           buttons
-          @input="onTravelModeChanged"
-          @click="onTravelModeChanged"
           button-variant="outline-primary"
           size="sm"
+          @input="onTravelModeChanged"
         ></b-form-radio-group>
       </b-form-group>
       <div class="mt-1">
@@ -76,13 +75,22 @@ export default {
   components: {
     BIcon, BIconTruck, BIconPiggyBank, BIconBicycle
   },
+  props: {
+    travelModeOptions: {
+      required: true,
+      type: Array
+    },
+    value: {
+      type: Object,
+      required: true
+    }
+  },
   data: () => ({
     loading: false,
     travel: true,
     radius: true,
     sqm: 2,
     selectedLocationId: null,
-    travelMode: null,
     minuteOptions: [{
       text: '5',
       value: 5,
@@ -109,10 +117,10 @@ export default {
       this.selectedLocationId = location.id
       this.$emit('selected', location)
     },
-    onTravelModeChanged() {
+    onTravelModeChanged(val) {
       this.$nextTick(() => {
-        if (this.travelMode)
-          this.$emit('iso-input', this.travelMode)
+        this.$emit('input', { ...this.value, travelMode: val })
+        this.$emit('iso-input', val)
       })
     }
   }

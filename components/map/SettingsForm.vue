@@ -9,7 +9,7 @@
         <b-form-group label="Name:" label-for="name">
           <b-form-input
             id="name"
-            v-model="settings.name"
+            v-model="settings.title"
             placeholder="Map name"
             @input="CLEAR_ERROR"
             :state="getValidationState(validationContext)"
@@ -42,7 +42,7 @@
       <b-form-group label="SEO keywords:" label-for="seo">
         <b-form-tags
           input-id="seo"
-          v-model="settings.seo"
+          v-model="settings.seo_keywords"
           placeholder="SEO keywords"
         />
       </b-form-group>
@@ -64,7 +64,7 @@
         <b-form-group label="Map Template:" label-for="template">
           <b-form-select
             id="template"
-            v-model="settings.templateId"
+            v-model="settings.template_id"
             :options="templates"
             value-field="id"
             text-field="name"
@@ -82,29 +82,85 @@
       </validation-provider>
       
       <b-form-group label="Drivetime Rings">
-        <div v-for="(drivetimeRing, i) in settings.drivetimeRings" :key="i" class="d-flex ml-4 mt-1 align-items-center">
-          <label style="width: 60px;">{{ drivetimeRing.text }}</label>
+        <div class="d-flex ml-4 mt-1 align-items-center">
+          <label style="width: 120px;">Working</label>
           <b-form-radio-group
-            v-model="drivetimeRing.on"
+            v-model="settings.working_time_ring"
             :options="[{ text: 'On', value: true }, { text: 'Off', value: false }]"
             buttons
             button-variant="outline-primary"
             class="ml-2"
+            size="sm"
+          ></b-form-radio-group>
+        </div>
+        <div class="d-flex ml-4 mt-1 align-items-center">
+          <label style="width: 120px;">Bicycling</label>
+          <b-form-radio-group
+            v-model="settings.bicycle_time_ring"
+            :options="[{ text: 'On', value: true }, { text: 'Off', value: false }]"
+            buttons
+            button-variant="outline-primary"
+            class="ml-2"
+            size="sm"
+          ></b-form-radio-group>
+        </div>
+        <div class="d-flex ml-4 mt-1 align-items-center">
+          <label style="width: 120px;">Driving</label>
+          <b-form-radio-group
+            v-model="settings.drive_time_ring"
+            :options="[{ text: 'On', value: true }, { text: 'Off', value: false }]"
+            buttons
+            button-variant="outline-primary"
+            class="ml-2"
+            size="sm"
           ></b-form-radio-group>
         </div>
       </b-form-group>
 
       <b-form-group label="Distance Rings">
-        <div v-for="(distanceRing, i) in settings.distanceRings" :key="i" class="d-flex ml-4 mt-1">
-          <b-input-group append="miles" style="width: 200px;">
-            <b-form-input v-model="distanceRing.miles"></b-form-input>
-          </b-input-group>
+        <div class="d-flex ml-4 mt-1">
+          <div>
+            <b-form-input v-model="settings.distance_ring1" type="range" min="0" max="10" step="0.1" style="width: 300px;"></b-form-input>
+            <div class="mt-n2">{{ settings.distance_ring1 }} miles</div>
+          </div>
           <b-form-radio-group
-            v-model="distanceRing.on"
+            v-model="settings.distance_ring1_on"
             :options="[{ text: 'On', value: true }, { text: 'Off', value: false }]"
             buttons
             button-variant="outline-primary"
             class="ml-2"
+            size="sm"
+            style="height: 32px;"
+          ></b-form-radio-group>
+        </div>
+        <div class="d-flex ml-4 mt-1">
+          <div>
+            <b-form-input v-model="settings.distance_ring2" type="range" min="0" max="10" step="0.1" style="width: 300px;"></b-form-input>
+            <div class="mt-n2">{{ settings.distance_ring2 }} miles</div>
+          </div>
+          <b-form-radio-group
+            v-model="settings.distance_ring2_on"
+            :options="[{ text: 'On', value: true }, { text: 'Off', value: false }]"
+            buttons
+            button-variant="outline-primary"
+            class="ml-2"
+            size="sm"
+            style="height: 32px;"
+          ></b-form-radio-group>
+        </div>
+        <div class="d-flex ml-4 mt-1">
+          <div>
+            <b-form-input v-model="settings.distance_ring3" type="range" min="0" max="10" step="0.1" style="width: 300px;"></b-form-input>
+            <div class="mt-n2">{{ settings.distance_ring3 }} miles</div>
+          </div>
+          <b-form-radio-group
+            v-model="settings.distance_ring3_on"
+            :options="[{ text: 'On', value: true }, { text: 'Off', value: false }]"
+            buttons
+            button-variant="outline-primary"
+            class="ml-2"
+            size="sm"
+            style="height: 32px;"
           ></b-form-radio-group>
         </div>
       </b-form-group>
@@ -115,7 +171,7 @@
         class="d-flex align-items-center"
         label-class="mr-2 mb-1"
       >
-        <b-form-checkbox id="basemap-selector" v-model="settings.basemapSelector" switch></b-form-checkbox>
+        <b-form-checkbox id="basemap-selector" v-model="settings.basemap_selector" switch></b-form-checkbox>
       </b-form-group>
 
       <b-form-group
@@ -124,7 +180,7 @@
         class="d-flex align-items-center"
         label-class="mr-2 mb-1"
       >
-        <b-form-checkbox id="address-finder" v-model="settings.addressFinder" switch></b-form-checkbox>
+        <b-form-checkbox id="address-finder" v-model="settings.address_finder" switch></b-form-checkbox>
       </b-form-group>
 
       <div class="text-right">
@@ -156,30 +212,22 @@ export default {
   data: () => ({
     loading: false,
     settings: {
-      name: '',
+      title: '',
       url: '',
       description: '',
-      templateId: null,
+      template_id: null,
       seo: [],
-      distanceRings: [{
-        on: false,
-        miles: 0
-      }, {
-        on: false,
-        miles: 0
-      }, {
-        on: false,
-        miles: 0
-      }],
-      drivetimeRings: [{
-        on: false,
-        text: 'Walking'
-      }, {
-        on: false,
-        text: 'Driving'
-      }],
-      addressFinder: false,
-      basemapSelector: false
+      drive_time_ring: false,
+      bicycle_time_ring: false,
+      working_time_ring: false,
+      distance_ring1: 0,
+      distance_ring1_on: false,
+      distance_ring2: 0,
+      distance_ring2_on: false,
+      distance_ring3: 0,
+      distance_ring3_on: false,
+      address_finder: false,
+      basemap_selector: false
     }
   }),
   computed: {
@@ -192,12 +240,22 @@ export default {
       try {
         const response = await this.getMap(this.$route.params.id)
 
-        this.settings.name = response.data.map.title
+        this.settings.title = response.data.map.title
         this.settings.url = `${window.location.origin}/maps/${this.$route.params.id}/preview`
         this.settings.description = response.data.map.description
-        this.settings.templateId = response.data.map.template_id
-        this.settings.seo = JSON.parse(response.data.map.seo_keywords)
-        this.settings.basemapSelector = response.data.map.map_selector
+        this.settings.template_id = response.data.map.template_id
+        this.settings.seo_keywords = response.data.map.seo_keywords
+        this.settings.drive_time_ring = response.data.map.drive_time_ring
+        this.settings.bicycle_time_ring = response.data.map.bicycle_time_ring
+        this.settings.working_time_ring = response.data.map.working_time_ring
+        this.settings.distance_ring1 = response.data.map.distance_ring1
+        this.settings.distance_ring1_on = response.data.map.distance_ring1_on
+        this.settings.distance_ring2 = response.data.map.distance_ring2
+        this.settings.distance_ring2_on = response.data.map.distance_ring2_on
+        this.settings.distance_ring3 = response.data.map.distance_ring3
+        this.settings.distance_ring3_on = response.data.map.distance_ring3_on
+        this.settings.address_finder = response.data.map.address_finder
+        this.settings.basemap_selector = response.data.map.basemap_selector
       } catch (err) {
         console.log(err)
       }
@@ -217,7 +275,9 @@ export default {
         let response
 
         if (this.isEdit) {
-          response = await this.updateMap({ ...this.settings, id: this.$route.params.id })
+          response = await this.updateMap({
+            ...this.settings, id: this.$route.params.id
+          })
           this.$emit('updated', response.data.map)
         } else {
           response = await this.createMap(this.settings)

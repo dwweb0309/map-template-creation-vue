@@ -1,7 +1,7 @@
 <template>
   <validation-observer ref="form" v-slot="{ handleSubmit }">
     <b-form @submit.prevent="handleSubmit(onSubmit)">
-      <b-form-group label="Name:" label-for="name">
+      <b-form-group label="Pin:" label-for="pin">
         <b-form-input
           id="pin"
           v-model="form.pin"
@@ -104,14 +104,31 @@
         v-slot="validationContext"
       >
         <b-form-group label="Squarefeet:" label-for="squarefeet">
-          <b-form-input
+          <!-- <b-form-input
             id="squarefeet"
             type="number"
             v-model="form.squarefeet"
             placeholder="Squarefeet"
             @input="CLEAR_ERROR"
             :state="getValidationState(validationContext)"
-          />
+          /> -->
+          <b-input-group>
+            <template #prepend>
+              <b-form-input
+                placeholder="Unit"
+                class="mr-1"
+              ></b-form-input>
+            </template>
+
+            <b-form-input
+              id="squarefeet"
+              type="number"
+              v-model="form.squarefeet"
+              placeholder="Number Value"
+              @input="CLEAR_ERROR"
+              :state="getValidationState(validationContext)"
+            ></b-form-input>
+          </b-input-group>
           <b-form-invalid-feedback>
             {{ validationContext.errors[0] }}
           </b-form-invalid-feedback>
@@ -164,6 +181,13 @@
         </b-col>
       </b-row>
 
+      <!-- <b-form-file
+        v-model="form.file"
+        :state="Boolean(form.file)"
+        placeholder="Choose a file or drop it here..."
+        drop-placeholder="Drop file here..."
+      ></b-form-file> -->
+
       <div class="text-right">
         <b-button variant="outlined-primary" size="sm" @click="$router.go(-1)">Cancel</b-button>
         <b-button type="submit" variant="primary" size="sm" :disabled="loading">Submit</b-button>
@@ -207,7 +231,8 @@ export default {
       description: '',
       squarefeet: null,
       latitude: null,
-      longitude: null
+      longitude: null,
+      file: null
     }
   }),
   async fetch () {
