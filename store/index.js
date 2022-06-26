@@ -1,7 +1,7 @@
 export const actions = {
   async nuxtServerInit ({ dispatch, commit }, { error }) {
     const token = this.$cookies.get('token')
-
+console.log('nuxtServerInit: ', token)
     if (token) {
       try {
         await commit('auth/SET_TOKEN', token)

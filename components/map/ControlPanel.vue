@@ -24,15 +24,13 @@
           @input="onTravelModeChanged"
         ></b-form-radio-group>
       </b-form-group>
-      <div class="mt-1 mb-4">
+      <div class="mt-2">
         <label v-if="locations.length" for="available-sqm" class="mb-0 text-uppercase">Available {{ locations[0].map.location_unit_name }}</label>
-        <vue-range-slider
+        <vue-slider
           v-model="location_value_range"
           :min="0"
           :max="1000"
-          tooltip-dir="bottom"
-          :tooltip-merge="false"
-        />
+        ></vue-slider>
       </div>
     </div>
     
@@ -80,9 +78,9 @@
 
 <script>
 import { mapState, mapActions } from 'vuex'
-import VueRangeSlider from "vue-range-component";
-import "vue-range-component/dist/vue-range-slider.css";
-import { BIcon, BIconTruck, BIconPiggyBank, BIconBicycle } from 'bootstrap-vue'
+import VueSlider from 'vue-slider-component'
+import 'vue-slider-component/theme/default.css'
+import { BIcon, } from 'bootstrap-vue'
 
 export default {
   middleware: 'auth',
@@ -90,8 +88,8 @@ export default {
     requiresAuth: true
   },
   components: {
-    BIcon, BIconTruck, BIconPiggyBank, BIconBicycle,
-    VueRangeSlider
+    BIcon,
+    VueSlider
   },
   props: {
     travelModeOptions: {
