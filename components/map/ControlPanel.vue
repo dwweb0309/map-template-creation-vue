@@ -1,11 +1,21 @@
 <template>
   <div class="mt-2">
     <div class="px-3 py-2">
-      <b-form-checkbox v-model="travel" switch class="text-uppercase" @input="$emit('travel-times-toggled', $event)">Tranvel Times</b-form-checkbox>
-      <b-form-checkbox v-model="radius" switch class="text-uppercase" @input="$emit('radius-rings-toggled', $event)">Radius Rings</b-form-checkbox>
+      <b-form-checkbox
+        v-model="value.showTravelTimes"
+        switch
+        class="text-uppercase"
+        @input="onTravelModeToggled"
+      >Tranvel Times</b-form-checkbox>
+      <b-form-checkbox
+        v-model="value.showRadiusRings"
+        switch
+        class="text-uppercase"
+        @input="onRadiusRingsToggled"
+      >Radius Rings</b-form-checkbox>
       <b-form-group class="mt-2">
         <b-form-radio-group
-          v-if="travel"
+          v-if="value.showTravelTimes"
           :checked="value.travelMode"
           :options="travelModeOptions"
           buttons
@@ -14,10 +24,15 @@
           @input="onTravelModeChanged"
         ></b-form-radio-group>
       </b-form-group>
-      <div class="mt-1">
-        <label for="available-sqm" class="mb-0 text-uppercase">Available SQM</label>
-        <b-form-input id="available-sqm" v-model="sqm" type="range" min="0" max="30000"></b-form-input>
-        <div class="mt-n2 text-center text-warning">0 SQM - 30,000 SQM</div>
+      <div class="mt-1 mb-4">
+        <label v-if="locations.length" for="available-sqm" class="mb-0 text-uppercase">Available {{ locations[0].map.location_unit_name }}</label>
+        <vue-range-slider
+          v-model="location_value_range"
+          :min="0"
+          :max="1000"
+          tooltip-dir="bottom"
+          :tooltip-merge="false"
+        />
       </div>
     </div>
     
@@ -30,7 +45,7 @@
         <div class="py-3">Reset Map Zoom</div>
       </b-list-group-item>
       <b-list-group-item
-        v-for="(location, i) in locations"
+        v-for="(location, i) in filteredLocations"
         :key="location.id"
         button
         variant="primary"
@@ -40,7 +55,7 @@
       >
         <div>
           <div class="h5">{{ location.name }}</div>
-          <small>Total availabiity SQM {{ location.squarefeet }}</small>
+          <small>{{ location.map.location_unit_name }}: {{ location.location_value }}</small>
         </div>
         <div class="h1">{{ i + 1 }}</div>
       </b-list-group-item>
@@ -64,7 +79,9 @@
 </template>
 
 <script>
-import { mapState, mapMutations, mapActions } from 'vuex'
+import { mapState, mapActions } from 'vuex'
+import VueRangeSlider from "vue-range-component";
+import "vue-range-component/dist/vue-range-slider.css";
 import { BIcon, BIconTruck, BIconPiggyBank, BIconBicycle } from 'bootstrap-vue'
 
 export default {
@@ -73,7 +90,8 @@ export default {
     requiresAuth: true
   },
   components: {
-    BIcon, BIconTruck, BIconPiggyBank, BIconBicycle
+    BIcon, BIconTruck, BIconPiggyBank, BIconBicycle,
+    VueRangeSlider
   },
   props: {
     travelModeOptions: {
@@ -87,9 +105,8 @@ export default {
   },
   data: () => ({
     loading: false,
-    travel: true,
     radius: true,
-    sqm: 2,
+    location_value_range: [1, 1000],
     selectedLocationId: null,
     minuteOptions: [{
       text: '5',
@@ -106,7 +123,10 @@ export default {
     }]
   }),
   computed: {
-    ...mapState('location', ['locations'])
+    ...mapState('location', ['locations']),
+    filteredLocations() {
+      return this.locations.filter((location) => location.location_value > this.location_value_range[0] && location.location_value < this.location_value_range[1])
+    }
   },
   async fetch () {
     this.getLocations(this.$route.params.id)
@@ -122,6 +142,14 @@ export default {
         this.$emit('input', { ...this.value, travelMode: val })
         this.$emit('iso-input', val)
       })
+    },
+    onTravelModeToggled(val) {
+      this.$emit('travel-times-toggled', val)
+      this.$emit('input', { ...this.value, showTravelTimes: val })
+    },
+    onRadiusRingsToggled(val) {
+      this.$emit('radius-rings-toggled', val)
+      this.$emit('input', { ...this.value, showRadiusRings: val })
     }
   }
 }

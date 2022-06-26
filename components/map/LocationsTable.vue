@@ -1,5 +1,6 @@
 <template>
   <b-table
+    v-if="map"
     striped
     hover
     :items="locations"
@@ -35,7 +36,12 @@ export default {
   },
   data() {
     return {
-      fields: [
+      map: null
+    }
+  },
+  computed: {
+    fields() {
+      return [
         {
           key: 'name',
           label: 'Name',
@@ -52,8 +58,8 @@ export default {
           label: 'State',
           sortable: true
         }, {
-          key: 'squarefeet',
-          label: 'Squarefeet',
+          key: 'location_value',
+          label: this.map?.location_unit_name,
           sortable: true
         }, {
           key: 'latitude',
@@ -69,9 +75,10 @@ export default {
       ]
     }
   },
-  computed: {
-  },
-  async fetch() {
+  mounted() {
+    this.$axios.get(`/maps/${this.$route.params.id}`).then((res) => {
+      this.map = res.data.map
+    })
   },
   methods: {
   }

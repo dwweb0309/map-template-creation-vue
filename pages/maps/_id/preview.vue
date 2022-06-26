@@ -61,11 +61,12 @@ export default {
       map: null,
       showControlbar: true,
       radius: false,
-      travel: false,
       mapOption: 'ckpzzf6ee1jyg17qxen56map9',
       center: [0, 0],
       settings: {
-        travelMode: 'driving'
+        showTravelTimes: true,
+        travelMode: 'driving',
+        showRadiusRings: true
       },
       mapOptions: [
         { text: 'Street', value: 'ckpzzf6ee1jyg17qxen56map9' },
@@ -205,9 +206,9 @@ export default {
         this.gotoFirstLocation()
       })
 
-      this.map.on('click', 'addresses-circle', (e) => {
-        this.setLocationSelection(e.features[0])
-      });
+      // this.map.on('click', 'addresses-circle', (e) => {
+      //   this.setLocationSelection(e.features[0])
+      // });
     },
 
     addSources() {
@@ -236,13 +237,16 @@ export default {
     },
 
     addLayers() {
+      // iso layer
       this.minuteOptions.forEach((option) => {
         if (this.map.getLayer(`iso-layer-${option.value}`) === undefined) {
           this.map.addLayer({
             'id': `iso-layer-${option.value}`,
             'type': 'fill',
             'source': `iso-${option.value}`,
-            'layout': {},
+            'layout': {
+              'visibility': this.settings.showTravelTimes ? 'visible' : 'none'
+            },
             'paint': {
               'fill-color': option.variant,
               'fill-opacity': 0.3
@@ -251,6 +255,38 @@ export default {
         }
       })
 
+      // circles around location
+      this.meters.forEach((meter, i) => {
+        const options = {
+          steps: 200,
+          units: 'miles'
+        }
+
+        if (meter.visible) {
+          const circle = turf.circle(turf.point(this.center), meter.radius, options);
+
+          if (this.map.getLayer(`circle-${i}`) === undefined) {
+            this.map.addLayer({
+              id: `circle-${i}`,
+              type: 'line',
+              source: {
+                type: 'geojson',
+                data: circle
+              },
+              layout: {
+                'visibility': this.settings.showRadiusRings ? 'visible' : 'none'
+              },
+              paint: {
+                'line-color': meter.color,
+                'line-opacity': 1,
+                'line-width': 2
+              }
+            })
+          }
+        }
+      })
+
+      // address circles
       if (this.map.getLayer('addresses-circle') === undefined) {
         this.map.addLayer({
           id: 'addresses-circle',
@@ -265,6 +301,7 @@ export default {
         });
       }
 
+      // address labels
       if (this.map.getLayer("addresses-label") === undefined) {
         this.map.addLayer({
           id: "addresses-label",
@@ -279,36 +316,6 @@ export default {
           }
         });
       }
-
-      // circles around location
-      this.meters.forEach((meter, i) => {
-          // const centr = turf.point(this.center);
-          // const radius = meter.radius;
-          const options = {
-            steps: 80,
-            units: 'miles'
-          }
-
-          if (meter.visible) {
-            const circle = turf.circle(turf.point(this.center), meter.radius, options);
-
-            if (this.map.getLayer(`circle-${i}`) === undefined) {
-              this.map.addLayer({
-                id: `circle-${i}`,
-                type: 'line',
-                source: {
-                  type: 'geojson',
-                  data: circle
-                },
-                paint: {
-                  'line-color': meter.color,
-                  'line-opacity': 1,
-                  'line-width': 2
-                }
-              })
-            }
-          }
-        })
     },
 
     showPopUp(coordinates, html) {
@@ -320,15 +327,22 @@ export default {
         .setHTML(html)
         .addTo(this.map)
     },
-    setLocationSelection(feature) {
-      this.showPopUp(feature.geometry.coordinates, feature.properties.name)
-      this.showCircles(feature)
-      this.map.flyTo({
-        center: feature.geometry.coordinates,
-        zoom: 10,
-        speed: 1
-      })
-    },
+    // setLocationSelection(feature) {
+    //   this.showPopUp(feature.geometry.coordinates, feature.properties.name)
+      
+    //   const circle = turf.circle(centr, radius, options);
+    //   const source = this.map.getSource(`circle-${meter.radius}`)
+
+    //   if (source) {
+    //     source.setData(circle)
+    //   }
+      
+    //   this.map.flyTo({
+    //     center: feature.geometry.coordinates,
+    //     zoom: 12,
+    //     speed: 1
+    //   })
+    // },
     onMapModeChange() {
       this.map.setStyle('mapbox://styles/mapster/' + this.mapOption)
 
@@ -341,23 +355,25 @@ export default {
     },
     onLocationSelected(location) {
       this.selectedLocation = location
+      const options = {
+        steps: 200,
+        units: 'miles'
+      }
 
-      this.setLocationSelection({
-        type: 'Feature',
-        properties: {
-          name: location.name
-        },
-        geometry: {
-          type: 'Point',
-          coordinates: [location.longitude, location.latitude]
+      this.meters.forEach((meter, i) => {
+        if (meter.visible) {
+          const circle = turf.circle(turf.point([location.longitude, location.latitude]), meter.radius, options);
+          
+          this.map.getSource(`circle-${i}`).setData(circle)
         }
       })
+      this.getIso(this.settings.travelMode)
     },
     gotoFirstLocation() {
       if (this.geojson.features.length) {
         this.map.flyTo({
           center: this.geojson.features[0].geometry.coordinates,
-          zoom: 12,
+          zoom: 10,
           speed: 2
         })
       }
@@ -371,78 +387,78 @@ export default {
 
       this.map.fitBounds(bounds, { padding: 80 })
     },
-    showCircles(feature) {
-      this.meters.forEach((meter) => {
-        const centr = turf.point(feature.geometry.coordinates);
-        const radius = meter.radius;
-        const options = {
-          steps: 80,
-          units: 'kilometers'
-        }
-        const circle = turf.circle(centr, radius, options);
-        const source = this.map.getSource(`circle-${meter.radius}`)
+    // setCircles(feature) {
+    //   this.meters.forEach((meter) => {
+    //     const centr = turf.point(feature.geometry.coordinates);
+    //     const radius = meter.radius;
+    //     const options = {
+    //       steps: 200,
+    //       units: 'kilometers'
+    //     }
+    //     const circle = turf.circle(centr, radius, options);
+    //     const source = this.map.getSource(`circle-${meter.radius}`)
 
-        if (source) {
-          source.setData(circle)
-        }
-      })
-      // const metersToPixelsAtMaxZoom = (meters, latitude) => meters / 0.075 / Math.cos(latitude * Math.PI / 180)
-      // const meters = [1000, 3000, 5000]
-      // const source = this.map.getSource('point-5000')
+    //     if (source) {
+    //       source.setData(circle)
+    //     }
+    //   })
+    //   // const metersToPixelsAtMaxZoom = (meters, latitude) => meters / 0.075 / Math.cos(latitude * Math.PI / 180)
+    //   // const meters = [1000, 3000, 5000]
+    //   // const source = this.map.getSource('point-5000')
 
-      // if (source) {
-      //   source.setData({
-      //     type: "FeatureCollection",
-      //     features: [{
-      //       type: "Feature",
-      //       properties: {
-      //         title: 'aaaaaa'
-      //       },
-      //       geometry: feature.geometry
-      //     }]
-      //   })
-      // } else {
-      //   this.map.addSource('point-5000', {
-      //     type: 'geojson',
-      //     data: {
-      //       type: "FeatureCollection",
-      //       features: [{
-      //         type: "Feature",
-      //         properties: {
-      //           title: 'aaaaaa'
-      //         },
-      //         geometry: feature.geometry
-      //       }]
-      //     }
-      //   })
-      // }
+    //   // if (source) {
+    //   //   source.setData({
+    //   //     type: "FeatureCollection",
+    //   //     features: [{
+    //   //       type: "Feature",
+    //   //       properties: {
+    //   //         title: 'aaaaaa'
+    //   //       },
+    //   //       geometry: feature.geometry
+    //   //     }]
+    //   //   })
+    //   // } else {
+    //   //   this.map.addSource('point-5000', {
+    //   //     type: 'geojson',
+    //   //     data: {
+    //   //       type: "FeatureCollection",
+    //   //       features: [{
+    //   //         type: "Feature",
+    //   //         properties: {
+    //   //           title: 'aaaaaa'
+    //   //         },
+    //   //         geometry: feature.geometry
+    //   //       }]
+    //   //     }
+    //   //   })
+    //   // }
 
-      // meters.forEach((meter) => {
-      //   const layerId = `circle-${meter}`
+    //   // meters.forEach((meter) => {
+    //   //   const layerId = `circle-${meter}`
 
-      //   if (this.map.getLayer(layerId)) {
-      //     this.map.removeLayer(layerId)
-      //   }
+    //   //   if (this.map.getLayer(layerId)) {
+    //   //     this.map.removeLayer(layerId)
+    //   //   }
 
-      //   this.map.addLayer({
-      //     id: layerId,
-      //     type: 'circle',
-      //     source: 'point-5000',
-      //     paint: {
-      //       'circle-radius': {
-      //         stops: [
-      //           [0, 0],
-      //           [20, metersToPixelsAtMaxZoom(meter, feature.geometry.coordinates[1])]
-      //         ],
-      //         base: 2
-      //       },
-      //       'circle-opacity': 0,
-      //       'circle-stroke-width': 2,
-      //       'circle-stroke-color': '#11b4da'
-      //     }
-      //   })
-      // })
-    },
+    //   //   this.map.addLayer({
+    //   //     id: layerId,
+    //   //     type: 'circle',
+    //   //     source: 'point-5000',
+    //   //     paint: {
+    //   //       'circle-radius': {
+    //   //         stops: [
+    //   //           [0, 0],
+    //   //           [20, metersToPixelsAtMaxZoom(meter, feature.geometry.coordinates[1])]
+    //   //         ],
+    //   //         base: 2
+    //   //       },
+    //   //       'circle-opacity': 0,
+    //   //       'circle-stroke-width': 2,
+    //   //       'circle-stroke-color': '#11b4da'
+    //   //     }
+    //   //   })
+    //   // })
+    // },
     async getIso(profile) {
       const urlBase = 'https://api.mapbox.com/isochrone/v1/mapbox/'
       const lon = this.selectedLocation.longitude

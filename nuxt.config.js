@@ -1,6 +1,6 @@
 export default {
   // Disable server-side rendering: https://go.nuxtjs.dev/ssr-mode
-  ssr: true,
+  ssr: false,
 
   // Global page headers: https://go.nuxtjs.dev/config-head
   head: {
@@ -58,7 +58,7 @@ export default {
   },
   // Axios module configuration: https://go.nuxtjs.dev/config-axios
   axios: {
-    baseURL: process.env.BASE_URL || 'http://localhost:3030/api/v1/'
+    baseURL: process.env.BASE_URL || 'http://localhost:3090/api/v1/'
   },
 
   // Build Configuration: https://go.nuxtjs.dev/config-build

@@ -99,36 +99,20 @@
       </b-form-group>
 
       <validation-provider
+        v-if="map"
         name="Squarefeet"
         rules="required"
         v-slot="validationContext"
       >
-        <b-form-group label="Squarefeet:" label-for="squarefeet">
-          <!-- <b-form-input
-            id="squarefeet"
+        <b-form-group :label="map.location_unit_name" label-for="location_unit_name">
+          <b-form-input
+            id="location_unit_name"
             type="number"
-            v-model="form.squarefeet"
-            placeholder="Squarefeet"
+            v-model="form.location_value"
+            :placeholder="map.location_unit_name"
             @input="CLEAR_ERROR"
             :state="getValidationState(validationContext)"
-          /> -->
-          <b-input-group>
-            <template #prepend>
-              <b-form-input
-                placeholder="Unit"
-                class="mr-1"
-              ></b-form-input>
-            </template>
-
-            <b-form-input
-              id="squarefeet"
-              type="number"
-              v-model="form.squarefeet"
-              placeholder="Number Value"
-              @input="CLEAR_ERROR"
-              :state="getValidationState(validationContext)"
-            ></b-form-input>
-          </b-input-group>
+          />
           <b-form-invalid-feedback>
             {{ validationContext.errors[0] }}
           </b-form-invalid-feedback>
@@ -220,6 +204,7 @@ export default {
   },
   data: () => ({
     loading: false,
+    map: null,
     form: {
       pin: '',
       name: '',
@@ -237,6 +222,18 @@ export default {
   }),
   async fetch () {
     this.CLEAR_ERROR()
+    let mapId
+
+    if (this.isEdit) {
+      this.$axios.get(`/locations/${this.locationId}`).then((res) => {
+        this.map = res.data.location.map
+      })
+    } else {
+      this.$axios.get(`/maps/${this.mapId}`).then((res) => {
+        this.map = res.data.map
+      })
+    }
+
     if (this.isEdit) {
       try {
         const response = await this.getLocation(this.locationId)
@@ -248,6 +245,7 @@ export default {
   },
   methods: {
     ...mapActions('location', ['createLocation', 'updateLocation', 'getLocation']),
+    ...mapActions('map', ['getMap']),
     ...mapMutations('location', ['CLEAR_ERROR']),
     getValidationState({ dirty, validated, valid = null }) {
       return dirty || validated ? valid : null

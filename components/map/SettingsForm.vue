@@ -183,6 +183,25 @@
         <b-form-checkbox id="address-finder" v-model="settings.address_finder" switch></b-form-checkbox>
       </b-form-group>
 
+      <validation-provider
+        name="location_unit_name"
+        rules="required"
+        v-slot="validationContext"
+      >
+        <b-form-group label="Location value unit:" label-for="location_unit_name">
+          <b-form-input
+            id="location_unit_name"
+            v-model="settings.location_unit_name"
+            placeholder="Location value unit"
+            @input="CLEAR_ERROR"
+            :state="getValidationState(validationContext)"
+          />
+          <b-form-invalid-feedback>
+            {{ validationContext.errors[0] }}
+          </b-form-invalid-feedback>
+        </b-form-group>
+      </validation-provider>
+
       <div class="text-right">
         <b-button variant="outlined-primary" size="sm" to="/dashboard">Cancel</b-button>
         <b-button type="submit" variant="primary" size="sm" :disabled="loading">Submit</b-button>
@@ -227,7 +246,8 @@ export default {
       distance_ring3: 0,
       distance_ring3_on: false,
       address_finder: false,
-      basemap_selector: false
+      basemap_selector: false,
+      location_unit_name: ''
     }
   }),
   computed: {
@@ -244,7 +264,7 @@ export default {
         this.settings.url = `${window.location.origin}/maps/${this.$route.params.id}/preview`
         this.settings.description = response.data.map.description
         this.settings.template_id = response.data.map.template_id
-        this.settings.seo_keywords = response.data.map.seo_keywords
+        this.settings.seo_keywords = JSON.parse(response.data.map.seo_keywords)
         this.settings.drive_time_ring = response.data.map.drive_time_ring
         this.settings.bicycle_time_ring = response.data.map.bicycle_time_ring
         this.settings.working_time_ring = response.data.map.working_time_ring
@@ -256,6 +276,7 @@ export default {
         this.settings.distance_ring3_on = response.data.map.distance_ring3_on
         this.settings.address_finder = response.data.map.address_finder
         this.settings.basemap_selector = response.data.map.basemap_selector
+        this.settings.location_unit_name = response.data.map.location_unit_name
       } catch (err) {
         console.log(err)
       }
