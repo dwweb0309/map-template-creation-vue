@@ -24,8 +24,8 @@
           @input="onTravelModeChanged"
         ></b-form-radio-group>
       </b-form-group>
-      <div class="mt-2">
-        <label v-if="locations.length" for="available-sqm" class="mb-0 text-uppercase">Available {{ locations[0].map.location_unit_name }}</label>
+      <div class="mt-1">
+        <label v-if="locations.length" for="available-sqm" class="text-uppercase">Available {{ locations[0].map.location_unit_name }}</label>
         <vue-slider
           v-model="location_value_range"
           :min="0"
@@ -78,8 +78,6 @@
 
 <script>
 import { mapState, mapActions } from 'vuex'
-import VueSlider from 'vue-slider-component'
-import 'vue-slider-component/theme/default.css'
 import { BIcon, } from 'bootstrap-vue'
 
 export default {
@@ -89,7 +87,7 @@ export default {
   },
   components: {
     BIcon,
-    VueSlider
+    // VueSlider
   },
   props: {
     travelModeOptions: {
